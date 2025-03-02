@@ -1,4 +1,4 @@
-import { isDev } from '@/src/shared/utils/is-dev.utils';
+import { isDev } from '@/src/shared/utils/is-dev.util';
 import type { ApolloDriverConfig } from '@nestjs/apollo'
 import { ConfigService } from '@nestjs/config'
 import { join } from 'path';
