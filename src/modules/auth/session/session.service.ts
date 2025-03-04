@@ -4,12 +4,13 @@ import { Injectable, InternalServerErrorException, NotFoundException } from '@ne
 import { LoginInput } from './inputs/login.input';
 import { verify } from 'argon2';
 import type { Request } from 'express';
+import { getSessionMetadata } from '@/src/shared/utils/session-metada.util';
 
 @Injectable()
 export class SessionService {
   public constructor(private readonly PrismaService: PrismaService, private readonly ConfigService: ConfigService) {}
 
-  public async login(req: Request, input: LoginInput) {
+  public async login(req: Request, input: LoginInput, userAgent: string) {
     const { login, password } = input
 
     const user = await this.PrismaService.user.findFirst({
@@ -35,9 +36,12 @@ export class SessionService {
       throw new NotFoundException('Invalid password')
     }
 
+    const metadata = getSessionMetadata(req, userAgent)
+
     return new Promise((resolve, reject) => {
       req.session.createdAt = new Date()
       req.session.userId = user.id
+      req.session.metadata = metadata
 
       req.session.save((err) => {
         if(err) {
