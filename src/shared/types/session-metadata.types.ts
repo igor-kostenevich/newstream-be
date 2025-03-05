@@ -16,3 +16,8 @@ export interface SessionMetadata {
   device: DeviceInfo
   ip: string
 }
+
+export interface UserSession {
+  [key: string]: any
+  id: string
+}
