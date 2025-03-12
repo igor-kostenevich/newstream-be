@@ -1,16 +1,18 @@
 import { RedisService } from './../../../core/redis/redis.service';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from './../../../core/prisma/prisma.service';
-import { ConflictException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { LoginInput } from './inputs/login.input';
 import { verify } from 'argon2';
 import type { Request } from 'express';
 import { getSessionMetadata } from '@/src/shared/utils/session-metada.util';
 import { UserSession } from '@/src/shared/types/session-metadata.types';
+import { destroySession, saveSession } from '@/src/shared/utils/session.util';
+import { VerificationService } from '../verification/verification.service';
 
 @Injectable()
 export class SessionService {
-  public constructor(private readonly prismaService: PrismaService, private readonly redisService: RedisService, private readonly configService: ConfigService) {}
+  public constructor(private readonly prismaService: PrismaService, private readonly redisService: RedisService, private readonly configService: ConfigService, private readonly verificationService: VerificationService) {}
 
   public async findByUser(req: Request) {
     const userId = req.session.userId
@@ -94,36 +96,19 @@ export class SessionService {
       throw new NotFoundException('Invalid password')
     }
 
+    if(!user.isEmailVerified) {
+      await this.verificationService.sendVerificationToken(user)
+
+      throw new BadRequestException('Email not verified, please check your email')
+    }
+
     const metadata = getSessionMetadata(req, userAgent)
 
-    return new Promise((resolve, reject) => {
-      req.session.createdAt = new Date()
-      req.session.userId = user.id
-      req.session.metadata = metadata
-
-      req.session.save((err) => {
-        if(err) {
-          return reject(new InternalServerErrorException('Failed to save session'))
-        }
-
-        resolve(user) 
-      })
-    })
+    return saveSession(req, user, metadata)
   }
 
   public async logout(req: Request) {
-    return new Promise((resolve, reject) => {
-
-      req.session.destroy((err) => {
-        if(err) {
-          return reject(new InternalServerErrorException('Failed to destroy session'))
-        }
-
-        req.res?.clearCookie(this.configService.getOrThrow<string>('SESSION_NAME'))
-
-        resolve(true) 
-      })
-    }) 
+    return destroySession(req, this.configService)
   }
 
   public async clearSession(req: Request) {

@@ -16,8 +16,32 @@ model User {
   displayName String @map("display_name")
   avatar   String?
   bio     String?
+
+  tokens    Token[] @relation("user_tokens")
+  isVerified Boolean @default(false) @map("is_verified")
+  isEmailVerified Boolean @default(false) @map("is_email_verified")
+
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("users")
+}
+
+model Token {
+  id        String   @id @default(uuid())
+  userId    String @map("user_id")
+  user      User   @relation("user_tokens", fields: [userId], references: [id], onDelete: Cascade)
+  token     String @unique
+  type      TokenType
+  expiresIn DateTime @map("expires_in")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("tokens")
+}
+
+enum TokenType {
+  EMAIL_VERIFY
+
+  @@map("token_types")
 }
