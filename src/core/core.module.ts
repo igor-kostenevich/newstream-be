@@ -10,6 +10,7 @@ import { AccountModule } from '../modules/auth/account/account.module';
 import { SessionModule } from '../modules/auth/session/session.module';
 import { MailModule } from '../modules/libs/mail/mail.module';
 import { VerificationModule } from '../modules/auth/verification/verification.module';
+import { PasswordRecoveryModule } from '../modules/auth/password-recovery/password-recovery.module';
 
 @Module({
   imports: [
@@ -28,7 +29,8 @@ import { VerificationModule } from '../modules/auth/verification/verification.mo
     MailModule,
     AccountModule,
     SessionModule,
-    VerificationModule
+    VerificationModule,
+    PasswordRecoveryModule,
   ],
 })
 
